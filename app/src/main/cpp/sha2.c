@@ -666,7 +666,7 @@ void sha512_update(sha512_ctx *ctx, const unsigned char *message,
     		sha512_transf(ctx, ctx->block, 1);
     		sha512_transf(ctx, shifted_message, block_nb);
     		break;
-
+#ifndef __clang__
     	case 1:
     	    sha512_sse4(ctx->block, ctx->h, (uint64_t)1);
     	    sha512_sse4(shifted_message, ctx->h, (uint64_t)block_nb);
@@ -681,7 +681,7 @@ void sha512_update(sha512_ctx *ctx, const unsigned char *message,
     	    sha512_rorx(ctx->block, ctx->h, (uint64_t)1);
     	    sha512_rorx(shifted_message, ctx->h, (uint64_t)block_nb);
     	    break;
-
+#endif
     	default:
     		sha512_transf(ctx, ctx->block, 1);
     		sha512_transf(ctx, shifted_message, block_nb);
@@ -721,7 +721,7 @@ void sha512_final(sha512_ctx *ctx, unsigned char *digest)
     case 0:
     	sha512_transf(ctx, ctx->block, block_nb);
     	break;
-
+#ifndef __clang__
     case 1:
         sha512_sse4(ctx->block, ctx->h, block_nb);
         break;
@@ -733,7 +733,7 @@ void sha512_final(sha512_ctx *ctx, unsigned char *digest)
     case 3:
         sha512_rorx(ctx->block, ctx->h, block_nb);
         break;
-
+#endif
     default:
     	sha512_transf(ctx, ctx->block, block_nb);
 

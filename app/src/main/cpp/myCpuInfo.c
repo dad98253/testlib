@@ -9,7 +9,7 @@ unsigned int myCpuInfo()
 {
 	unsigned int mydata = 0;
 
-
+#ifndef __clang__
 	   unsigned int index = 1;
 	   unsigned int index2 = 0;
 	   unsigned int regs[4];
@@ -62,7 +62,7 @@ unsigned int myCpuInfo()
 	        : "a"(index), "c"(index2));
 
 	    if ( (regs[1]>>5)&0x1 ) mydata++;
-
+#endif  // clang
 	return (mydata);
 }
 
