@@ -11,9 +11,23 @@
 #include <malloc.h>
 #include <ctype.h>
 #include "sha2.h"
+#ifdef __clang__
+#include <android/log.h>
+#endif
 
 
 #define MAX(x, y) (((x) < (y)) ? (y) : (x))
+
+#define TESTLIB "testlib"
+#ifdef __clang__
+#define PRINTSTERR  __android_log_print(ANDROID_LOG_DEBUG, TESTLIB,
+#define PRINTSTDOUT  __android_log_print(ANDROID_LOG_DEBUG, TESTLIB,
+#define ADDCR
+#else   // clang
+#define PRINTSTERR fprintf(stderr,
+#define PRINTSTDOUT printf(
+#define ADDCR "\n"
+#endif  // clang
 
 int DecompressStr(char *MasterPW, char *MasterPWComp,int lenMasterPWComp, int option);
 void debug_dump_stuff_msg_f(const void *msg, void *x, unsigned int size);
@@ -134,14 +148,14 @@ int doHAsh ( char * salt, char * password , int rounds)
 	}
 //debug_dump_stuff_msg_f("final (pre shuffle)", intermediatedigest, SHA512_DIGEST_SIZE);
 
-	printf("$6$");
-	if (rounds!=5000) printf("rounds=%i$",rounds);
-	printf("%s$",salt);
+    PRINTSTDOUT"$6$");
+	if (rounds!=5000) PRINTSTDOUT"rounds=%i$",rounds);
+    PRINTSTDOUT"%s$",salt);
 	for (i=0;i<64;i++) hash[i] = intermediatedigest[byteorder[i]];
 //debug_dump_stuff_msg_f("final (after shuffle)", hash, SHA512_DIGEST_SIZE);
 	intermediate[0]='\000';
 	if ( ( Resultlen = DecompressStr(intermediate, (char *)hash,SHA512_DIGEST_SIZE, 0) ) == 0) {
-		fprintf(stderr,"error in DecompressStr\n");
+        PRINTSTERR "error in DecompressSt" ADDCR);
 		return(1);
 	}
 	while ( Resultlen < 86) {
@@ -149,7 +163,7 @@ int doHAsh ( char * salt, char * password , int rounds)
 		intermediate[Resultlen+1] = '\000';
 		Resultlen++;
 	}
-	printf("%s\n",intermediate);
+    PRINTSTDOUT"%s"ADDCR,intermediate);
 
 	free(intermediate);
 	free(alternate);
@@ -231,7 +245,7 @@ int DecompressStr(char *MasterPW, char *MasterPWComp,int lenMasterPWComp, int op
 	for (i=0;i<lenStrOut;i++){
 		rawChar=MasterPW[i];
 		if (rawChar > 63 ) {
-			fprintf(stderr,"String contains illegal characters!\n");
+            PRINTSTERR"String contains illegal characters!"ADDCR);
 			return (0);
 		}
 		Xchar=(int)(*(b64+rawChar));
@@ -267,25 +281,25 @@ void debug_dump_stuff_noeol_f(void *x, unsigned int size)
 	if ( x ) {
 		for(i=0;i<size;i++)
 		{
-			fprintf(stderr,"%02x", ((unsigned char*)x)[i]);
+            PRINTSTERR "%02x", ((unsigned char*)x)[i]);
 			if( (i%4)==3 ) {
-				fprintf(stderr," ");
+                PRINTSTERR " ");
 			}
 		}
 		fprintf(stderr," ___ ");
 		for(i=0;i<size;i++)
 		{
 			if ( isprint(((unsigned char*)x)[i]) ) {
-				fprintf(stderr,"%c", ((unsigned char*)x)[i]);
+                PRINTSTERR "%c", ((unsigned char*)x)[i]);
 			} else {
-				fprintf(stderr,".");
+                PRINTSTERR ".");
 			}
 			if( (i%4)==3 ) {
-				fprintf(stderr," ");
+				PRINTSTERR " ");
 			}
 		}
 	} else {
-		fprintf(stderr,"debug_dump_fmt: bad call, argument pointer is %p\n", x);
+        PRINTSTERR "debug_dump_fmt: bad call, argument pointer is %p"ADDCR, x);
 	}
 
 	return;
@@ -296,20 +310,20 @@ void debug_dump_stuff_f(void* x, unsigned int size)
 
 
 	debug_dump_stuff_noeol_f(x,size);
-	fprintf(stderr,"\n");
+    PRINTSTERR ""ADDCR);
 }
 
 void debug_dump_stuff_msg_f(const void *msg, void *x, unsigned int size)
 {
 
 
-	fprintf(stderr,"%s\n",(char *)msg);
+    PRINTSTERR "%s"ADDCR,(char *)msg);
 
 	if ( x ) {
-		fprintf(stderr,"[0-%i] starting at address %p: \n",size ,x );
+        PRINTSTERR "[0-%i] starting at address %p: "ADDCR,size ,x );
 		debug_dump_stuff_f(x , size);
 	} else {
-		fprintf(stderr,"%s points to -nil-, dump of %s[0-%i] not possible!\n", (char *)msg, (char *)msg, size);
+        PRINTSTERR "%s points to -nil-, dump of %s[0-%i] not possible!"ADDCR, (char *)msg, (char *)msg, size);
 	}
 
 	return;

@@ -4,6 +4,8 @@
 #include "sha2.h"
 
 
+extern "C" int doHAsh ( char * salt, char * password , int rounds);
+
 void test(const char *vector, unsigned char *digest,
           unsigned int digest_size)
 {
@@ -91,19 +93,27 @@ SHA512/256("")
 0x c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a
  *
  */
+    static const char message1[] = "abc";
+#ifndef SHA512ONLY
+    static const char message2a[] = "abcdbcdecdefdefgefghfghighijhi"
+                                    "jkijkljklmklmnlmnomnopnopq";
+#endif
+    static const char message2b[] = "abcdefghbcdefghicdefghijdefghijkefghij"
+                                    "klfghijklmghijklmnhijklmnoijklmnopjklm"
+                                    "nopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+    unsigned char *message3;
+    unsigned int message3_len = 1000000;
 #ifdef DOTIMING
 #define NUMOFLOOPS	10000
 #else
 #define NUMOFLOOPS	1
 #endif
-
+//    unsigned int message3_len = 127;
     unsigned char digest[SHA512_DIGEST_SIZE];
     unsigned char intelmessage[SHA512_DIGEST_SIZE];
     time_t mytime;
     int i;
     int errflag = 1;
-    unsigned char *message3;
-    unsigned int message3_len = 1000000;
 
     message3 = (unsigned char *)malloc(message3_len);
     if (message3 == NULL) {
@@ -115,7 +125,50 @@ SHA512/256("")
     memset(message3, 'a', message3_len);
 // test linux hash routine
     __android_log_print(ANDROID_LOG_DEBUG, "testlib", "Test linux passwd hashing...");
+    if(doHAsh ( (char *)"Y8Kk7.cZ", (char *)"password" , 5000)) {
+        __android_log_print(ANDROID_LOG_DEBUG, "testlib", "should be: %s",
+                            "$6$Y8Kk7.cZ$1vVest4bV/0WDJIe9fO7m/YpUOykmduM5IzDCE6Hj3W0WdrmEw8xP6vW4wxuCLaSPG/9wveo4NoUcBVAvxOeU0");
+        goto myerror;
+    }
 
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib","SHA-2 FIPS 180-2 Validation tests");
+#ifndef SHA512ONLY
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "SHA-224 Test vectors");
+
+    sha224((const unsigned char *) message1, strlen(message1), digest);
+    test(vectors[0][0], digest, SHA224_DIGEST_SIZE);
+    sha224((const unsigned char *) message2a, strlen(message2a), digest);
+    test(vectors[0][1], digest, SHA224_DIGEST_SIZE);
+    sha224(message3, message3_len, digest);
+    test(vectors[0][2], digest, SHA224_DIGEST_SIZE);
+//    fprintf(stderr,"\n");
+
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "SHA-256 Test vectors\n");
+
+    sha256((const unsigned char *) message1, strlen(message1), digest);
+    test(vectors[1][0], digest, SHA256_DIGEST_SIZE);
+    sha256((const unsigned char *) message2a, strlen(message2a), digest);
+    test(vectors[1][1], digest, SHA256_DIGEST_SIZE);
+    sha256(message3, message3_len, digest);
+    test(vectors[1][2], digest, SHA256_DIGEST_SIZE);
+//    fprintf(stderr,"\n");
+
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "SHA-384 Test vectors\n");
+
+    sha384((const unsigned char *) message1, strlen(message1), digest);
+    test(vectors[2][0], digest, SHA384_DIGEST_SIZE);
+    sha384((const unsigned char *)message2b, strlen(message2b), digest);
+    test(vectors[2][1], digest, SHA384_DIGEST_SIZE);
+    sha384(message3, message3_len, digest);
+    test(vectors[2][2], digest, SHA384_DIGEST_SIZE);
+//    fprintf(stderr,"\n");
+#endif  //  SHA512ONLY
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "SHA-512 Test vectors\n");
+
+    sha512((const unsigned char *) message1, strlen(message1), digest);
+    test(vectors[3][0], digest, SHA512_DIGEST_SIZE);
+    sha512((const unsigned char *) message2b, strlen(message2b), digest);
+    test(vectors[3][1], digest, SHA512_DIGEST_SIZE);
 
     mytime = time(NULL);
     __android_log_print(ANDROID_LOG_DEBUG, "testlib", "start time: %s",ctime(&mytime));
@@ -131,7 +184,7 @@ SHA512/256("")
 
 
 
-
+myexit:
     errflag = 0;
 myerror:
     std::string hello;
