@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+#include <android/log.h>
 #include "sha2.h"
 
 
@@ -15,12 +16,12 @@ void test(const char *vector, unsigned char *digest,
         sprintf(output + 2 * i, "%02x", digest[i]);
     }
 
-    fprintf(stderr,"H: %s\n", output);
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "H: %s\n", output);
     if (strlen(vector) != strlen(output)) fprintf(stderr,"vector lengths don't agree\nstrlen(vector)=%i, strlen(output)=%i\n",(int)strlen(vector),(int)strlen(output));
     if (strcmp(vector, output)) {
-        fprintf(stderr, "Test failed.\n");
-        fprintf(stderr, "vector=\"%s\"\n",vector);
-        fprintf(stderr, "output=\"%s\"\n",output);
+        __android_log_print(ANDROID_LOG_DEBUG, "testlib",  "Test failed.\n");
+        __android_log_print(ANDROID_LOG_DEBUG, "testlib",  "vector=\"%s\"\n",vector);
+        __android_log_print(ANDROID_LOG_DEBUG, "testlib",  "output=\"%s\"\n",output);
 //        exit(EXIT_FAILURE);
     }
 }
@@ -106,25 +107,27 @@ SHA512/256("")
 
     message3 = (unsigned char *)malloc(message3_len);
     if (message3 == NULL) {
-        fprintf(stderr, "Can't allocate memory\n");
+ //       fprintf(stderr, "Can't allocate memory\n");
+ //       __android_log_print(ANDROID_LOG_DEBUG, "testlib", "Need to print : %d %s",int_var, str_var);
+        __android_log_print(ANDROID_LOG_DEBUG, "testlib", "Can't allocate memory");
         goto myerror;
     }
     memset(message3, 'a', message3_len);
 // test linux hash routine
-    fprintf(stderr,"Test linux passwd hashing...\n");
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "Test linux passwd hashing...");
 
 
     mytime = time(NULL);
-    fprintf(stderr,"start time: %s",ctime(&mytime));
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "start time: %s",ctime(&mytime));
     for (i=0;i<NUMOFLOOPS;i++) sha512(message3, message3_len, digest);
     mytime = time(NULL);
-    fprintf(stderr,"end   time: %s",ctime(&mytime));
+    __android_log_print(ANDROID_LOG_DEBUG, "testlib", "end   time: %s",ctime(&mytime));
     test(vectors[3][2], digest, SHA512_DIGEST_SIZE);
     sha512((const unsigned char *)hithere, strlen(hithere), digest);
     test(vectors[3][3], digest, SHA512_DIGEST_SIZE);
     sha512((const unsigned char *)blankstr, strlen(blankstr), digest);
     test(vectors[3][4], digest, SHA512_DIGEST_SIZE);
-    fprintf(stderr,"\n");
+//    fprintf(stderr,"\n");
 
 
 
